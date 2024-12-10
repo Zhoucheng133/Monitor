@@ -38,7 +38,7 @@ class Functions {
 
     fun getNetworkData(): ArrayList<NetworkData>{
 
-        var ls=ArrayList<NetworkData>()
+        val ls=ArrayList<NetworkData>()
 
         for (networkIF in networks){
             networkIF.updateAttributes()
