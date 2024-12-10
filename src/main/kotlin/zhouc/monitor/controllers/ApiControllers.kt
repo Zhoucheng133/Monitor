@@ -16,4 +16,9 @@ class ApiControllers {
     fun allData(): AllData {
         return funcs.getAllData()
     }
+
+    @RequestMapping("/network")
+    fun networkData(): ArrayList<NetworkData>{
+        return funcs.getNetworkData()
+    }
 }
