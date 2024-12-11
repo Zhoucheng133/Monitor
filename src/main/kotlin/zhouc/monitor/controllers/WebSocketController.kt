@@ -1,17 +1,19 @@
 package zhouc.monitor.controllers
 
-import org.springframework.web.socket.WebSocketSession
-import org.springframework.web.socket.handler.TextWebSocketHandler
-import org.springframework.web.socket.TextMessage
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.CloseStatus
+import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketHandler
+import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.config.annotation.EnableWebSocket
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
+import org.springframework.web.socket.handler.TextWebSocketHandler
+import zhouc.monitor.services.Functions
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import org.slf4j.LoggerFactory
+
 
 @Configuration
 @EnableWebSocket
@@ -28,32 +30,26 @@ class WebSocketController : WebSocketConfigurer {
 }
 
 class MyWebSocketHandler : TextWebSocketHandler() {
-    private val logger = LoggerFactory.getLogger(MyWebSocketHandler::class.java)
-    private val executor = Executors.newSingleThreadScheduledExecutor()  // 更高效的定时任务调度器
+    private val executor = Executors.newSingleThreadScheduledExecutor()
     private var scheduledFuture: java.util.concurrent.ScheduledFuture<*>? = null
+    val funcs: Functions= Functions()
+    var objectMapper: ObjectMapper = ObjectMapper()
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        // 如果定时任务已经存在，取消之前的任务并重新调度
-        scheduledFuture?.cancel(false)
-
-        // 重新调度定时任务
-        scheduledFuture = executor.scheduleAtFixedRate({
-            try {
-                println("定时执行的内容")
-                session.sendMessage(TextMessage("这是定时执行的内容，间隔时间为2秒"))
-            } catch (e: Exception) {
-                logger.error("Error sending WebSocket message", e)
+        try {
+            if(message.payload=="ws_request"){
+                scheduledFuture?.cancel(false)
+                scheduledFuture = executor.scheduleAtFixedRate({
+                    val jsonData = objectMapper.writeValueAsString(funcs.getWsData())
+                    session.sendMessage(TextMessage(jsonData))
+                }, 0, 1, TimeUnit.SECONDS)
             }
-        }, 0, 2, TimeUnit.SECONDS)
-    }
 
-    override fun afterConnectionEstablished(session: WebSocketSession) {
-        println("New connection established: ${session.id}")
+        }catch (_: Exception){}
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
-        scheduledFuture?.cancel(false)  // 取消定时任务
-        executor.shutdown()  // 关闭定时任务调度器
-        println("Connection closed: ${session.id}")
+        scheduledFuture?.cancel(false)
+        executor.shutdown()
     }
 }
