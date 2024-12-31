@@ -50,6 +50,5 @@ class MyWebSocketHandler : TextWebSocketHandler() {
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
         scheduledFuture?.cancel(false)
-        executor.shutdown()
     }
 }
