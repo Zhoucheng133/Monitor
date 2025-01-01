@@ -45,7 +45,7 @@ class Functions {
                     DiskData(
                         name = it.name,
                         total = (it.totalSpace/(1024*1024)).toInt(),
-                        used = (it.usableSpace/(1024*1024)).toInt(),
+                        used = (it.totalSpace/(1024*1024)).toInt() - (it.usableSpace/(1024*1024)).toInt(),
                     )
                 }
             )
